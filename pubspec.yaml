@@ -188,3 +188,5 @@ flutter:
     - family: NotoSerifHebrew
       fonts:
         - asset: fonts/NotoSerifHebrew-VariableFont_wdth,wght.ttf
+dependency_overrides:
+  collection: ^1.19.0
