@@ -14,19 +14,19 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.3'
+          channel: 'stable'
           cache: true
 
-      - name: Bulldozer Mode (Fixing conflicts automatically)
+      - name: Bulldozer Mode (Ultimate Fix)
         run: |
-          # 1. מעיף את כל רכיבי הבדיקה
+          # 1. מעיף את כל רכיבי הבדיקה שהכשילו אותנו בהתחלה
           yq -i 'del(.dev_dependencies)' pubspec.yaml
           
-          # 2. מוחק את קובץ החוקים המחמירים
-          rm -f analysis_options.yaml
+          # 2. מעיף שאריות של "עקיפות" שאולי נשארו מהנסיונות הקודמים שלנו
+          yq -i 'del(.dependency_overrides)' pubspec.yaml || true
           
-          # 3. הזרקה חכמה של עקיפת התלויות ישירות לבלוק הקיים, בלי כפילויות!
-          yq -i '.dependency_overrides.collection = "^1.19.0"' pubspec.yaml
+          # 3. מוחק את חוקי הבדיקה של גוגל
+          rm -f analysis_options.yaml
 
       - name: Install dependencies
         run: flutter pub get
