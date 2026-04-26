@@ -1,0 +1,78 @@
+name: Android Package (Capacitor)
+
+on:
+  workflow_dispatch: # הפעלה ידנית
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Bulldozer Mode (Clean Prep)
+        run: |
+          yq -i 'del(.dev_dependencies)' pubspec.yaml
+          yq -i 'del(.dependency_overrides)' pubspec.yaml || true
+          rm -f analysis_options.yaml
+
+      - name: Build Flutter Web
+        run: flutter build web --release
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Initialize Capacitor
+        run: |
+          # יצירת package.json בסיסי אם לא קיים
+          if [ ! -f package.json ]; then
+            echo '{"name": "otzaria-app", "version": "1.0.0"}' > package.json
+          fi
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          
+          # יצירת הגדרות Capacitor
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.otzaria.app",
+            "appName": "Otzaria",
+            "webDir": "build/web",
+            "server": { "androidScheme": "https" }
+          }
+          EOF
+          
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Build Release Bundle (AAB)
+        run: |
+          cd android
+          ./gradlew bundleRelease
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: otzaria-final-android
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/bundle/release/app-release-unsigned.aab
