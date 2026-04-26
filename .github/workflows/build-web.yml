@@ -19,11 +19,14 @@ jobs:
 
       - name: Bulldozer Mode (Fixing conflicts automatically)
         run: |
-          # 1. מעיף את כל רכיבי הבדיקה (כולל flutter_test שגורם לשגיאת ההתנגשות)
+          # 1. מעיף את כל רכיבי הבדיקה
           yq -i 'del(.dev_dependencies)' pubspec.yaml
           
-          # 2. מוחק את קובץ החוקים המחמירים של גוגל כדי שלא יכשיל אותנו על פסיקים ורווחים
+          # 2. מוחק את קובץ החוקים המחמירים
           rm -f analysis_options.yaml
+          
+          # 3. הזרקה חכמה של עקיפת התלויות ישירות לבלוק הקיים, בלי כפילויות!
+          yq -i '.dependency_overrides.collection = "^1.19.0"' pubspec.yaml
 
       - name: Install dependencies
         run: flutter pub get
